@@ -405,8 +405,8 @@ To <dfn>record a redemption record</dfn> given an [=/origin=] |issuer|, an [=/or
 To <dfn>retrieve a redemption record</dfn> given an [=/origin=] |issuer| and an [=/origin=] |topLevel|, run the following steps:
 
 1. Let |currentTime| be the current date and time in milliseconds since 01 January, 1970 UTC.
-1. If [=redemptionTimes=][(|issuer|,|topLevel|)] [=map/exists|does not exist=], return null.
-1. Let (|record|, |expiration|, |signingKeys|) be [=redemptionTimes=][(|issuer|,|topLevel|)].
+1. If [=redemptionRecords=][(|issuer|,|topLevel|)] [=map/exists|does not exist=], return null.
+1. Let (|record|, |expiration|, |signingKeys|) be [=redemptionRecords=][(|issuer|,|topLevel|)].
 1. If |expiration| is less than |currentTime|, return null.
 1. Let |currentSigningKeys| be the result of [=look up the latest keys|looking up of the latest keys=] for |issuer|.
 1. If |currentSigningKeys| does not equal |signingKeys|, return null.
@@ -580,9 +580,9 @@ Note: [=request/Private token refresh policy=] is ignored unless [=request/priva
 
 This specification defines two new [=policy-controlled features=]. Exactly one of these policy features applies for a given Private State Token operation.
 
-The [=policy-controlled feature=] identified by "<dfn data-dfn-for="policy-controlled feature"><code>private-state-token-issuance</code></dfn>" applies for the <code>"token-request"</code> operation. The [=default allowlist=] for this feature is <code>["self"]</code>.
+The [=policy-controlled feature=] identified by "<dfn data-dfn-for="policy-controlled feature"><code>private-state-token-issuance</code></dfn>" applies for the <code>"token-request"</code> operation. The [=default allowlist=] for this feature is <code>*</code>.
 
-The [=policy-controlled feature=] identified by "<dfn data-dfn-for="policy-controlled feature"><code>private-state-token-redemption</code></dfn>" applies for the <code>"send-redemption-record"</code> and <code>"token-redemption"</code> operations. The [=default allowlist=] for this feature is <code>["self"]</code>.
+The [=policy-controlled feature=] identified by "<dfn data-dfn-for="policy-controlled feature"><code>private-state-token-redemption</code></dfn>" applies for the <code>"send-redemption-record"</code> and <code>"token-redemption"</code> operations. The [=default allowlist=] for this feature is <code>*</code>.
 
 A [=request=] has an associated <dfn for="request">pstPretokens</dfn>, which is null or a [=byte sequence=].
 
@@ -973,6 +973,14 @@ origin, because the answer to the redemption query does not leak information abo
 the issuers of the currently stored tokens. Similar to token query, redemption
 query clears stale tokens.
 
+Clearing PST Data {#data-clear}
+--------------------------
+
+<a href="https://storage.spec.whatwg.org/#ui-guidelines">User interface guidance</a>
+from <a href="https://storage.spec.whatwg.org">storage</a> standard should be
+followed. User agents should provide interfaces to clear PST data from
+storage.
+
 Private State Token HTTP Header Fields {#pst-http-header-fields}
 =================================
 
@@ -1123,6 +1131,15 @@ redeeming them all. To prevent this, the specification limits the number of rede
 operations. In the context of a given origin, two redemptions are allowed initially. However,
 the third redemption is only allowed once more than an [=implementation-defined=] amount of time,
 usually 48 hours, have elapsed since the first redemption.
+
+Preventing Issuer Exhaustion {#issuer-exhaustion}
+-----------------------------------------------
+Competing scripts might race to call <code>hasPrivateToken(issuer)</code> to ensure their |issuer|
+enters the [=issuerAssociations=] [=map=] before the |issuer| of others given a limit of two per
+[=environment/top-level origin=]. To control this process, the [=environment/top-level origin=]
+could call <code>hasPrivateToken(issuer)</code> up to twice before any other JavaScript is included
+to ensure their preferred |issuer|s are available.
+
 
 Preventing Double Spending {#preventing-double-spend}
 -----------------------------------------------------
